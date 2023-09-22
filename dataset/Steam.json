@@ -1,0 +1,97 @@
+{
+	"name": "Steam",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Steam_s3",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AmazonS3Location",
+				"bucketName": "games-data-analysis",
+				"fileName": "steam.csv"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "appid",
+				"type": "String"
+			},
+			{
+				"name": "name",
+				"type": "String"
+			},
+			{
+				"name": "release_date",
+				"type": "String"
+			},
+			{
+				"name": "english",
+				"type": "String"
+			},
+			{
+				"name": "developer",
+				"type": "String"
+			},
+			{
+				"name": "publisher",
+				"type": "String"
+			},
+			{
+				"name": "platforms",
+				"type": "String"
+			},
+			{
+				"name": "required_age",
+				"type": "String"
+			},
+			{
+				"name": "categories",
+				"type": "String"
+			},
+			{
+				"name": "genres",
+				"type": "String"
+			},
+			{
+				"name": "steamspy_tags",
+				"type": "String"
+			},
+			{
+				"name": "achievements",
+				"type": "String"
+			},
+			{
+				"name": "positive_ratings",
+				"type": "String"
+			},
+			{
+				"name": "negative_ratings",
+				"type": "String"
+			},
+			{
+				"name": "average_playtime",
+				"type": "String"
+			},
+			{
+				"name": "median_playtime",
+				"type": "String"
+			},
+			{
+				"name": "owners",
+				"type": "String"
+			},
+			{
+				"name": "price",
+				"type": "String"
+			}
+		]
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

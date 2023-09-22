@@ -1,0 +1,81 @@
+{
+	"name": "Games",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "games_s3",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AmazonS3Location",
+				"bucketName": "games-data-analysis",
+				"fileName": "games.csv"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "Prop_0",
+				"type": "String"
+			},
+			{
+				"name": "Title",
+				"type": "String"
+			},
+			{
+				"name": "Release Date",
+				"type": "String"
+			},
+			{
+				"name": "Team",
+				"type": "String"
+			},
+			{
+				"name": "Rating",
+				"type": "String"
+			},
+			{
+				"name": "Times Listed",
+				"type": "String"
+			},
+			{
+				"name": "Number of Reviews",
+				"type": "String"
+			},
+			{
+				"name": "Genres",
+				"type": "String"
+			},
+			{
+				"name": "Summary",
+				"type": "String"
+			},
+			{
+				"name": "Reviews",
+				"type": "String"
+			},
+			{
+				"name": "Plays",
+				"type": "String"
+			},
+			{
+				"name": "Playing",
+				"type": "String"
+			},
+			{
+				"name": "Backlogs",
+				"type": "String"
+			},
+			{
+				"name": "Wishlist",
+				"type": "String"
+			}
+		]
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

@@ -1,0 +1,2498 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"type": "string",
+			"metadata": "Workspace name",
+			"defaultValue": "games-data-analysis"
+		},
+		"Steam_s3_secretAccessKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'secretAccessKey' of 'Steam_s3'"
+		},
+		"games-data-analysis-WorkspaceDefaultSqlServer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'games-data-analysis-WorkspaceDefaultSqlServer'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:games-data-analysis.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"games_s3_secretAccessKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'secretAccessKey' of 'games_s3'"
+		},
+		"ign_s3_secretAccessKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'secretAccessKey' of 'ign_s3'"
+		},
+		"steam_tag_s3_secretAccessKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'secretAccessKey' of 'steam_tag_s3'"
+		},
+		"Steam_s3_properties_typeProperties_accessKeyId": {
+			"type": "string",
+			"defaultValue": "AKIA3H3SVVLYT7RZXB2N"
+		},
+		"games-data-analysis-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://gamesdataanalysis.dfs.core.windows.net"
+		},
+		"games_s3_properties_typeProperties_accessKeyId": {
+			"type": "string",
+			"defaultValue": "AKIA3H3SVVLYT7RZXB2N"
+		},
+		"ign_s3_properties_typeProperties_accessKeyId": {
+			"type": "string",
+			"defaultValue": "AKIA3H3SVVLYT7RZXB2N"
+		},
+		"steam_tag_s3_properties_typeProperties_accessKeyId": {
+			"type": "string",
+			"defaultValue": "AKIA3H3SVVLYT7RZXB2N"
+		}
+	},
+	"variables": {
+		"workspaceId": "[concat('Microsoft.Synapse/workspaces/', parameters('workspaceName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('workspaceName'), '/SparkSQL')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/extract')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "IGN",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AmazonS3ReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ign",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ign_adls",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "Steam",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "IGN",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AmazonS3ReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "Steam",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "steam_adls",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "Games",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Steam",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AmazonS3ReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "Games",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "games_adls",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "steam_tag_data",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Games",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AmazonS3ReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "steam_tag_data",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "steam_tag_adls",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-09-22T06:39:51Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/ign')]",
+				"[concat(variables('workspaceId'), '/datasets/ign_adls')]",
+				"[concat(variables('workspaceId'), '/datasets/Steam')]",
+				"[concat(variables('workspaceId'), '/datasets/steam_adls')]",
+				"[concat(variables('workspaceId'), '/datasets/Games')]",
+				"[concat(variables('workspaceId'), '/datasets/games_adls')]",
+				"[concat(variables('workspaceId'), '/datasets/steam_tag_data')]",
+				"[concat(variables('workspaceId'), '/datasets/steam_tag_adls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Games')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "games_s3",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AmazonS3Location",
+						"bucketName": "games-data-analysis",
+						"fileName": "games.csv"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Prop_0",
+						"type": "String"
+					},
+					{
+						"name": "Title",
+						"type": "String"
+					},
+					{
+						"name": "Release Date",
+						"type": "String"
+					},
+					{
+						"name": "Team",
+						"type": "String"
+					},
+					{
+						"name": "Rating",
+						"type": "String"
+					},
+					{
+						"name": "Times Listed",
+						"type": "String"
+					},
+					{
+						"name": "Number of Reviews",
+						"type": "String"
+					},
+					{
+						"name": "Genres",
+						"type": "String"
+					},
+					{
+						"name": "Summary",
+						"type": "String"
+					},
+					{
+						"name": "Reviews",
+						"type": "String"
+					},
+					{
+						"name": "Plays",
+						"type": "String"
+					},
+					{
+						"name": "Playing",
+						"type": "String"
+					},
+					{
+						"name": "Backlogs",
+						"type": "String"
+					},
+					{
+						"name": "Wishlist",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/games_s3')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Steam')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "Steam_s3",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AmazonS3Location",
+						"bucketName": "games-data-analysis",
+						"fileName": "steam.csv"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "appid",
+						"type": "String"
+					},
+					{
+						"name": "name",
+						"type": "String"
+					},
+					{
+						"name": "release_date",
+						"type": "String"
+					},
+					{
+						"name": "english",
+						"type": "String"
+					},
+					{
+						"name": "developer",
+						"type": "String"
+					},
+					{
+						"name": "publisher",
+						"type": "String"
+					},
+					{
+						"name": "platforms",
+						"type": "String"
+					},
+					{
+						"name": "required_age",
+						"type": "String"
+					},
+					{
+						"name": "categories",
+						"type": "String"
+					},
+					{
+						"name": "genres",
+						"type": "String"
+					},
+					{
+						"name": "steamspy_tags",
+						"type": "String"
+					},
+					{
+						"name": "achievements",
+						"type": "String"
+					},
+					{
+						"name": "positive_ratings",
+						"type": "String"
+					},
+					{
+						"name": "negative_ratings",
+						"type": "String"
+					},
+					{
+						"name": "average_playtime",
+						"type": "String"
+					},
+					{
+						"name": "median_playtime",
+						"type": "String"
+					},
+					{
+						"name": "owners",
+						"type": "String"
+					},
+					{
+						"name": "price",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/Steam_s3')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/games_adls')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "games-data-analysis-WorkspaceDefaultStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "gamesdataanalysis"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/games-data-analysis-WorkspaceDefaultStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ign')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ign_s3",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AmazonS3Location",
+						"bucketName": "games-data-analysis",
+						"fileName": "ign.csv"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Prop_0",
+						"type": "String"
+					},
+					{
+						"name": "score_phrase",
+						"type": "String"
+					},
+					{
+						"name": "title",
+						"type": "String"
+					},
+					{
+						"name": "url",
+						"type": "String"
+					},
+					{
+						"name": "platform",
+						"type": "String"
+					},
+					{
+						"name": "score",
+						"type": "String"
+					},
+					{
+						"name": "genre",
+						"type": "String"
+					},
+					{
+						"name": "editors_choice",
+						"type": "String"
+					},
+					{
+						"name": "release_year",
+						"type": "String"
+					},
+					{
+						"name": "release_month",
+						"type": "String"
+					},
+					{
+						"name": "release_day",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/ign_s3')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ign_adls')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "games-data-analysis-WorkspaceDefaultStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "gamesdataanalysis"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/games-data-analysis-WorkspaceDefaultStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/steam_adls')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "games-data-analysis-WorkspaceDefaultStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "gamesdataanalysis"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/games-data-analysis-WorkspaceDefaultStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/steam_tag_adls')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "games-data-analysis-WorkspaceDefaultStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "gamesdataanalysis"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/games-data-analysis-WorkspaceDefaultStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/steam_tag_data')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "steam_tag_s3",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AmazonS3Location",
+						"bucketName": "games-data-analysis",
+						"fileName": "steamspy_tag_data.csv"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "appid",
+						"type": "String"
+					},
+					{
+						"name": "1980s",
+						"type": "String"
+					},
+					{
+						"name": "1990s",
+						"type": "String"
+					},
+					{
+						"name": "2.5d",
+						"type": "String"
+					},
+					{
+						"name": "2d",
+						"type": "String"
+					},
+					{
+						"name": "2d_fighter",
+						"type": "String"
+					},
+					{
+						"name": "360_video",
+						"type": "String"
+					},
+					{
+						"name": "3d",
+						"type": "String"
+					},
+					{
+						"name": "3d_platformer",
+						"type": "String"
+					},
+					{
+						"name": "3d_vision",
+						"type": "String"
+					},
+					{
+						"name": "4_player_local",
+						"type": "String"
+					},
+					{
+						"name": "4x",
+						"type": "String"
+					},
+					{
+						"name": "6dof",
+						"type": "String"
+					},
+					{
+						"name": "atv",
+						"type": "String"
+					},
+					{
+						"name": "abstract",
+						"type": "String"
+					},
+					{
+						"name": "action",
+						"type": "String"
+					},
+					{
+						"name": "action_rpg",
+						"type": "String"
+					},
+					{
+						"name": "action_adventure",
+						"type": "String"
+					},
+					{
+						"name": "addictive",
+						"type": "String"
+					},
+					{
+						"name": "adventure",
+						"type": "String"
+					},
+					{
+						"name": "agriculture",
+						"type": "String"
+					},
+					{
+						"name": "aliens",
+						"type": "String"
+					},
+					{
+						"name": "alternate_history",
+						"type": "String"
+					},
+					{
+						"name": "america",
+						"type": "String"
+					},
+					{
+						"name": "animation_&_modeling",
+						"type": "String"
+					},
+					{
+						"name": "anime",
+						"type": "String"
+					},
+					{
+						"name": "arcade",
+						"type": "String"
+					},
+					{
+						"name": "arena_shooter",
+						"type": "String"
+					},
+					{
+						"name": "artificial_intelligence",
+						"type": "String"
+					},
+					{
+						"name": "assassin",
+						"type": "String"
+					},
+					{
+						"name": "asynchronous_multiplayer",
+						"type": "String"
+					},
+					{
+						"name": "atmospheric",
+						"type": "String"
+					},
+					{
+						"name": "audio_production",
+						"type": "String"
+					},
+					{
+						"name": "bmx",
+						"type": "String"
+					},
+					{
+						"name": "base_building",
+						"type": "String"
+					},
+					{
+						"name": "baseball",
+						"type": "String"
+					},
+					{
+						"name": "based_on_a_novel",
+						"type": "String"
+					},
+					{
+						"name": "basketball",
+						"type": "String"
+					},
+					{
+						"name": "batman",
+						"type": "String"
+					},
+					{
+						"name": "battle_royale",
+						"type": "String"
+					},
+					{
+						"name": "beat_em_up",
+						"type": "String"
+					},
+					{
+						"name": "beautiful",
+						"type": "String"
+					},
+					{
+						"name": "benchmark",
+						"type": "String"
+					},
+					{
+						"name": "bikes",
+						"type": "String"
+					},
+					{
+						"name": "blood",
+						"type": "String"
+					},
+					{
+						"name": "board_game",
+						"type": "String"
+					},
+					{
+						"name": "bowling",
+						"type": "String"
+					},
+					{
+						"name": "building",
+						"type": "String"
+					},
+					{
+						"name": "bullet_hell",
+						"type": "String"
+					},
+					{
+						"name": "bullet_time",
+						"type": "String"
+					},
+					{
+						"name": "crpg",
+						"type": "String"
+					},
+					{
+						"name": "capitalism",
+						"type": "String"
+					},
+					{
+						"name": "card_game",
+						"type": "String"
+					},
+					{
+						"name": "cartoon",
+						"type": "String"
+					},
+					{
+						"name": "cartoony",
+						"type": "String"
+					},
+					{
+						"name": "casual",
+						"type": "String"
+					},
+					{
+						"name": "cats",
+						"type": "String"
+					},
+					{
+						"name": "character_action_game",
+						"type": "String"
+					},
+					{
+						"name": "character_customization",
+						"type": "String"
+					},
+					{
+						"name": "chess",
+						"type": "String"
+					},
+					{
+						"name": "choices_matter",
+						"type": "String"
+					},
+					{
+						"name": "choose_your_own_adventure",
+						"type": "String"
+					},
+					{
+						"name": "cinematic",
+						"type": "String"
+					},
+					{
+						"name": "city_builder",
+						"type": "String"
+					},
+					{
+						"name": "class_based",
+						"type": "String"
+					},
+					{
+						"name": "classic",
+						"type": "String"
+					},
+					{
+						"name": "clicker",
+						"type": "String"
+					},
+					{
+						"name": "co_op",
+						"type": "String"
+					},
+					{
+						"name": "co_op_campaign",
+						"type": "String"
+					},
+					{
+						"name": "cold_war",
+						"type": "String"
+					},
+					{
+						"name": "colorful",
+						"type": "String"
+					},
+					{
+						"name": "comedy",
+						"type": "String"
+					},
+					{
+						"name": "comic_book",
+						"type": "String"
+					},
+					{
+						"name": "competitive",
+						"type": "String"
+					},
+					{
+						"name": "conspiracy",
+						"type": "String"
+					},
+					{
+						"name": "controller",
+						"type": "String"
+					},
+					{
+						"name": "conversation",
+						"type": "String"
+					},
+					{
+						"name": "crafting",
+						"type": "String"
+					},
+					{
+						"name": "crime",
+						"type": "String"
+					},
+					{
+						"name": "crowdfunded",
+						"type": "String"
+					},
+					{
+						"name": "cult_classic",
+						"type": "String"
+					},
+					{
+						"name": "cute",
+						"type": "String"
+					},
+					{
+						"name": "cyberpunk",
+						"type": "String"
+					},
+					{
+						"name": "cycling",
+						"type": "String"
+					},
+					{
+						"name": "dark",
+						"type": "String"
+					},
+					{
+						"name": "dark_comedy",
+						"type": "String"
+					},
+					{
+						"name": "dark_fantasy",
+						"type": "String"
+					},
+					{
+						"name": "dark_humor",
+						"type": "String"
+					},
+					{
+						"name": "dating_sim",
+						"type": "String"
+					},
+					{
+						"name": "demons",
+						"type": "String"
+					},
+					{
+						"name": "design_&_illustration",
+						"type": "String"
+					},
+					{
+						"name": "destruction",
+						"type": "String"
+					},
+					{
+						"name": "detective",
+						"type": "String"
+					},
+					{
+						"name": "difficult",
+						"type": "String"
+					},
+					{
+						"name": "dinosaurs",
+						"type": "String"
+					},
+					{
+						"name": "diplomacy",
+						"type": "String"
+					},
+					{
+						"name": "documentary",
+						"type": "String"
+					},
+					{
+						"name": "dog",
+						"type": "String"
+					},
+					{
+						"name": "dragons",
+						"type": "String"
+					},
+					{
+						"name": "drama",
+						"type": "String"
+					},
+					{
+						"name": "driving",
+						"type": "String"
+					},
+					{
+						"name": "dungeon_crawler",
+						"type": "String"
+					},
+					{
+						"name": "dungeons_&_dragons",
+						"type": "String"
+					},
+					{
+						"name": "dynamic_narration",
+						"type": "String"
+					},
+					{
+						"name": "dystopian_",
+						"type": "String"
+					},
+					{
+						"name": "early_access",
+						"type": "String"
+					},
+					{
+						"name": "economy",
+						"type": "String"
+					},
+					{
+						"name": "education",
+						"type": "String"
+					},
+					{
+						"name": "emotional",
+						"type": "String"
+					},
+					{
+						"name": "epic",
+						"type": "String"
+					},
+					{
+						"name": "episodic",
+						"type": "String"
+					},
+					{
+						"name": "experience",
+						"type": "String"
+					},
+					{
+						"name": "experimental",
+						"type": "String"
+					},
+					{
+						"name": "exploration",
+						"type": "String"
+					},
+					{
+						"name": "fmv",
+						"type": "String"
+					},
+					{
+						"name": "fps",
+						"type": "String"
+					},
+					{
+						"name": "faith",
+						"type": "String"
+					},
+					{
+						"name": "family_friendly",
+						"type": "String"
+					},
+					{
+						"name": "fantasy",
+						"type": "String"
+					},
+					{
+						"name": "fast_paced",
+						"type": "String"
+					},
+					{
+						"name": "feature_film",
+						"type": "String"
+					},
+					{
+						"name": "female_protagonist",
+						"type": "String"
+					},
+					{
+						"name": "fighting",
+						"type": "String"
+					},
+					{
+						"name": "first_person",
+						"type": "String"
+					},
+					{
+						"name": "fishing",
+						"type": "String"
+					},
+					{
+						"name": "flight",
+						"type": "String"
+					},
+					{
+						"name": "football",
+						"type": "String"
+					},
+					{
+						"name": "foreign",
+						"type": "String"
+					},
+					{
+						"name": "free_to_play",
+						"type": "String"
+					},
+					{
+						"name": "funny",
+						"type": "String"
+					},
+					{
+						"name": "futuristic",
+						"type": "String"
+					},
+					{
+						"name": "gambling",
+						"type": "String"
+					},
+					{
+						"name": "game_development",
+						"type": "String"
+					},
+					{
+						"name": "gamemaker",
+						"type": "String"
+					},
+					{
+						"name": "games_workshop",
+						"type": "String"
+					},
+					{
+						"name": "gaming",
+						"type": "String"
+					},
+					{
+						"name": "god_game",
+						"type": "String"
+					},
+					{
+						"name": "golf",
+						"type": "String"
+					},
+					{
+						"name": "gore",
+						"type": "String"
+					},
+					{
+						"name": "gothic",
+						"type": "String"
+					},
+					{
+						"name": "grand_strategy",
+						"type": "String"
+					},
+					{
+						"name": "great_soundtrack",
+						"type": "String"
+					},
+					{
+						"name": "grid_based_movement",
+						"type": "String"
+					},
+					{
+						"name": "gun_customization",
+						"type": "String"
+					},
+					{
+						"name": "hack_and_slash",
+						"type": "String"
+					},
+					{
+						"name": "hacking",
+						"type": "String"
+					},
+					{
+						"name": "hand_drawn",
+						"type": "String"
+					},
+					{
+						"name": "hardware",
+						"type": "String"
+					},
+					{
+						"name": "heist",
+						"type": "String"
+					},
+					{
+						"name": "hex_grid",
+						"type": "String"
+					},
+					{
+						"name": "hidden_object",
+						"type": "String"
+					},
+					{
+						"name": "historical",
+						"type": "String"
+					},
+					{
+						"name": "hockey",
+						"type": "String"
+					},
+					{
+						"name": "horror",
+						"type": "String"
+					},
+					{
+						"name": "horses",
+						"type": "String"
+					},
+					{
+						"name": "hunting",
+						"type": "String"
+					},
+					{
+						"name": "illuminati",
+						"type": "String"
+					},
+					{
+						"name": "indie",
+						"type": "String"
+					},
+					{
+						"name": "intentionally_awkward_controls",
+						"type": "String"
+					},
+					{
+						"name": "interactive_fiction",
+						"type": "String"
+					},
+					{
+						"name": "inventory_management",
+						"type": "String"
+					},
+					{
+						"name": "investigation",
+						"type": "String"
+					},
+					{
+						"name": "isometric",
+						"type": "String"
+					},
+					{
+						"name": "jrpg",
+						"type": "String"
+					},
+					{
+						"name": "jet",
+						"type": "String"
+					},
+					{
+						"name": "kickstarter",
+						"type": "String"
+					},
+					{
+						"name": "lego",
+						"type": "String"
+					},
+					{
+						"name": "lara_croft",
+						"type": "String"
+					},
+					{
+						"name": "lemmings",
+						"type": "String"
+					},
+					{
+						"name": "level_editor",
+						"type": "String"
+					},
+					{
+						"name": "linear",
+						"type": "String"
+					},
+					{
+						"name": "local_co_op",
+						"type": "String"
+					},
+					{
+						"name": "local_multiplayer",
+						"type": "String"
+					},
+					{
+						"name": "logic",
+						"type": "String"
+					},
+					{
+						"name": "loot",
+						"type": "String"
+					},
+					{
+						"name": "lore_rich",
+						"type": "String"
+					},
+					{
+						"name": "lovecraftian",
+						"type": "String"
+					},
+					{
+						"name": "mmorpg",
+						"type": "String"
+					},
+					{
+						"name": "moba",
+						"type": "String"
+					},
+					{
+						"name": "magic",
+						"type": "String"
+					},
+					{
+						"name": "management",
+						"type": "String"
+					},
+					{
+						"name": "mars",
+						"type": "String"
+					},
+					{
+						"name": "martial_arts",
+						"type": "String"
+					},
+					{
+						"name": "massively_multiplayer",
+						"type": "String"
+					},
+					{
+						"name": "masterpiece",
+						"type": "String"
+					},
+					{
+						"name": "match_3",
+						"type": "String"
+					},
+					{
+						"name": "mature",
+						"type": "String"
+					},
+					{
+						"name": "mechs",
+						"type": "String"
+					},
+					{
+						"name": "medieval",
+						"type": "String"
+					},
+					{
+						"name": "memes",
+						"type": "String"
+					},
+					{
+						"name": "metroidvania",
+						"type": "String"
+					},
+					{
+						"name": "military",
+						"type": "String"
+					},
+					{
+						"name": "mini_golf",
+						"type": "String"
+					},
+					{
+						"name": "minigames",
+						"type": "String"
+					},
+					{
+						"name": "minimalist",
+						"type": "String"
+					},
+					{
+						"name": "mining",
+						"type": "String"
+					},
+					{
+						"name": "mod",
+						"type": "String"
+					},
+					{
+						"name": "moddable",
+						"type": "String"
+					},
+					{
+						"name": "modern",
+						"type": "String"
+					},
+					{
+						"name": "motocross",
+						"type": "String"
+					},
+					{
+						"name": "motorbike",
+						"type": "String"
+					},
+					{
+						"name": "mouse_only",
+						"type": "String"
+					},
+					{
+						"name": "movie",
+						"type": "String"
+					},
+					{
+						"name": "multiplayer",
+						"type": "String"
+					},
+					{
+						"name": "multiple_endings",
+						"type": "String"
+					},
+					{
+						"name": "music",
+						"type": "String"
+					},
+					{
+						"name": "music_based_procedural_generation",
+						"type": "String"
+					},
+					{
+						"name": "mystery",
+						"type": "String"
+					},
+					{
+						"name": "mystery_dungeon",
+						"type": "String"
+					},
+					{
+						"name": "mythology",
+						"type": "String"
+					},
+					{
+						"name": "nsfw",
+						"type": "String"
+					},
+					{
+						"name": "narration",
+						"type": "String"
+					},
+					{
+						"name": "naval",
+						"type": "String"
+					},
+					{
+						"name": "ninja",
+						"type": "String"
+					},
+					{
+						"name": "noir",
+						"type": "String"
+					},
+					{
+						"name": "nonlinear",
+						"type": "String"
+					},
+					{
+						"name": "nudity",
+						"type": "String"
+					},
+					{
+						"name": "offroad",
+						"type": "String"
+					},
+					{
+						"name": "old_school",
+						"type": "String"
+					},
+					{
+						"name": "on_rails_shooter",
+						"type": "String"
+					},
+					{
+						"name": "online_co_op",
+						"type": "String"
+					},
+					{
+						"name": "open_world",
+						"type": "String"
+					},
+					{
+						"name": "otome",
+						"type": "String"
+					},
+					{
+						"name": "parkour",
+						"type": "String"
+					},
+					{
+						"name": "parody_",
+						"type": "String"
+					},
+					{
+						"name": "party_based_rpg",
+						"type": "String"
+					},
+					{
+						"name": "perma_death",
+						"type": "String"
+					},
+					{
+						"name": "philisophical",
+						"type": "String"
+					},
+					{
+						"name": "photo_editing",
+						"type": "String"
+					},
+					{
+						"name": "physics",
+						"type": "String"
+					},
+					{
+						"name": "pinball",
+						"type": "String"
+					},
+					{
+						"name": "pirates",
+						"type": "String"
+					},
+					{
+						"name": "pixel_graphics",
+						"type": "String"
+					},
+					{
+						"name": "platformer",
+						"type": "String"
+					},
+					{
+						"name": "point_&_click",
+						"type": "String"
+					},
+					{
+						"name": "political",
+						"type": "String"
+					},
+					{
+						"name": "politics",
+						"type": "String"
+					},
+					{
+						"name": "pool",
+						"type": "String"
+					},
+					{
+						"name": "post_apocalyptic",
+						"type": "String"
+					},
+					{
+						"name": "procedural_generation",
+						"type": "String"
+					},
+					{
+						"name": "programming",
+						"type": "String"
+					},
+					{
+						"name": "psychedelic",
+						"type": "String"
+					},
+					{
+						"name": "psychological",
+						"type": "String"
+					},
+					{
+						"name": "psychological_horror",
+						"type": "String"
+					},
+					{
+						"name": "puzzle",
+						"type": "String"
+					},
+					{
+						"name": "puzzle_platformer",
+						"type": "String"
+					},
+					{
+						"name": "pve",
+						"type": "String"
+					},
+					{
+						"name": "pvp",
+						"type": "String"
+					},
+					{
+						"name": "quick_time_events",
+						"type": "String"
+					},
+					{
+						"name": "rpg",
+						"type": "String"
+					},
+					{
+						"name": "rpgmaker",
+						"type": "String"
+					},
+					{
+						"name": "rts",
+						"type": "String"
+					},
+					{
+						"name": "racing",
+						"type": "String"
+					},
+					{
+						"name": "real_time_tactics",
+						"type": "String"
+					},
+					{
+						"name": "real_time",
+						"type": "String"
+					},
+					{
+						"name": "real_time_with_pause",
+						"type": "String"
+					},
+					{
+						"name": "realistic",
+						"type": "String"
+					},
+					{
+						"name": "relaxing",
+						"type": "String"
+					},
+					{
+						"name": "remake",
+						"type": "String"
+					},
+					{
+						"name": "replay_value",
+						"type": "String"
+					},
+					{
+						"name": "resource_management",
+						"type": "String"
+					},
+					{
+						"name": "retro",
+						"type": "String"
+					},
+					{
+						"name": "rhythm",
+						"type": "String"
+					},
+					{
+						"name": "robots",
+						"type": "String"
+					},
+					{
+						"name": "rogue_like",
+						"type": "String"
+					},
+					{
+						"name": "rogue_lite",
+						"type": "String"
+					},
+					{
+						"name": "romance",
+						"type": "String"
+					},
+					{
+						"name": "rome",
+						"type": "String"
+					},
+					{
+						"name": "runner",
+						"type": "String"
+					},
+					{
+						"name": "sailing",
+						"type": "String"
+					},
+					{
+						"name": "sandbox",
+						"type": "String"
+					},
+					{
+						"name": "satire",
+						"type": "String"
+					},
+					{
+						"name": "sci_fi",
+						"type": "String"
+					},
+					{
+						"name": "science",
+						"type": "String"
+					},
+					{
+						"name": "score_attack",
+						"type": "String"
+					},
+					{
+						"name": "sequel",
+						"type": "String"
+					},
+					{
+						"name": "sexual_content",
+						"type": "String"
+					},
+					{
+						"name": "shoot_em_up",
+						"type": "String"
+					},
+					{
+						"name": "shooter",
+						"type": "String"
+					},
+					{
+						"name": "short",
+						"type": "String"
+					},
+					{
+						"name": "side_scroller",
+						"type": "String"
+					},
+					{
+						"name": "silent_protagonist",
+						"type": "String"
+					},
+					{
+						"name": "simulation",
+						"type": "String"
+					},
+					{
+						"name": "singleplayer",
+						"type": "String"
+					},
+					{
+						"name": "skateboarding",
+						"type": "String"
+					},
+					{
+						"name": "skating",
+						"type": "String"
+					},
+					{
+						"name": "skiing",
+						"type": "String"
+					},
+					{
+						"name": "sniper",
+						"type": "String"
+					},
+					{
+						"name": "snow",
+						"type": "String"
+					},
+					{
+						"name": "snowboarding",
+						"type": "String"
+					},
+					{
+						"name": "soccer",
+						"type": "String"
+					},
+					{
+						"name": "software",
+						"type": "String"
+					},
+					{
+						"name": "software_training",
+						"type": "String"
+					},
+					{
+						"name": "sokoban",
+						"type": "String"
+					},
+					{
+						"name": "souls_like",
+						"type": "String"
+					},
+					{
+						"name": "soundtrack",
+						"type": "String"
+					},
+					{
+						"name": "space",
+						"type": "String"
+					},
+					{
+						"name": "space_sim",
+						"type": "String"
+					},
+					{
+						"name": "spectacle_fighter",
+						"type": "String"
+					},
+					{
+						"name": "spelling",
+						"type": "String"
+					},
+					{
+						"name": "split_screen",
+						"type": "String"
+					},
+					{
+						"name": "sports",
+						"type": "String"
+					},
+					{
+						"name": "star_wars",
+						"type": "String"
+					},
+					{
+						"name": "stealth",
+						"type": "String"
+					},
+					{
+						"name": "steam_machine",
+						"type": "String"
+					},
+					{
+						"name": "steampunk",
+						"type": "String"
+					},
+					{
+						"name": "story_rich",
+						"type": "String"
+					},
+					{
+						"name": "strategy",
+						"type": "String"
+					},
+					{
+						"name": "strategy_rpg",
+						"type": "String"
+					},
+					{
+						"name": "stylized",
+						"type": "String"
+					},
+					{
+						"name": "submarine",
+						"type": "String"
+					},
+					{
+						"name": "superhero",
+						"type": "String"
+					},
+					{
+						"name": "supernatural",
+						"type": "String"
+					},
+					{
+						"name": "surreal",
+						"type": "String"
+					},
+					{
+						"name": "survival",
+						"type": "String"
+					},
+					{
+						"name": "survival_horror",
+						"type": "String"
+					},
+					{
+						"name": "swordplay",
+						"type": "String"
+					},
+					{
+						"name": "tactical",
+						"type": "String"
+					},
+					{
+						"name": "tactical_rpg",
+						"type": "String"
+					},
+					{
+						"name": "tanks",
+						"type": "String"
+					},
+					{
+						"name": "team_based",
+						"type": "String"
+					},
+					{
+						"name": "tennis",
+						"type": "String"
+					},
+					{
+						"name": "text_based",
+						"type": "String"
+					},
+					{
+						"name": "third_person",
+						"type": "String"
+					},
+					{
+						"name": "third_person_shooter",
+						"type": "String"
+					},
+					{
+						"name": "thriller",
+						"type": "String"
+					},
+					{
+						"name": "time_attack",
+						"type": "String"
+					},
+					{
+						"name": "time_management",
+						"type": "String"
+					},
+					{
+						"name": "time_manipulation",
+						"type": "String"
+					},
+					{
+						"name": "time_travel",
+						"type": "String"
+					},
+					{
+						"name": "top_down",
+						"type": "String"
+					},
+					{
+						"name": "top_down_shooter",
+						"type": "String"
+					},
+					{
+						"name": "touch_friendly",
+						"type": "String"
+					},
+					{
+						"name": "tower_defense",
+						"type": "String"
+					},
+					{
+						"name": "trackir",
+						"type": "String"
+					},
+					{
+						"name": "trading",
+						"type": "String"
+					},
+					{
+						"name": "trading_card_game",
+						"type": "String"
+					},
+					{
+						"name": "trains",
+						"type": "String"
+					},
+					{
+						"name": "transhumanism",
+						"type": "String"
+					},
+					{
+						"name": "turn_based",
+						"type": "String"
+					},
+					{
+						"name": "turn_based_combat",
+						"type": "String"
+					},
+					{
+						"name": "turn_based_strategy",
+						"type": "String"
+					},
+					{
+						"name": "turn_based_tactics",
+						"type": "String"
+					},
+					{
+						"name": "tutorial",
+						"type": "String"
+					},
+					{
+						"name": "twin_stick_shooter",
+						"type": "String"
+					},
+					{
+						"name": "typing",
+						"type": "String"
+					},
+					{
+						"name": "underground",
+						"type": "String"
+					},
+					{
+						"name": "underwater",
+						"type": "String"
+					},
+					{
+						"name": "unforgiving",
+						"type": "String"
+					},
+					{
+						"name": "utilities",
+						"type": "String"
+					},
+					{
+						"name": "vr",
+						"type": "String"
+					},
+					{
+						"name": "vr_only",
+						"type": "String"
+					},
+					{
+						"name": "vampire",
+						"type": "String"
+					},
+					{
+						"name": "video_production",
+						"type": "String"
+					},
+					{
+						"name": "villain_protagonist",
+						"type": "String"
+					},
+					{
+						"name": "violent",
+						"type": "String"
+					},
+					{
+						"name": "visual_novel",
+						"type": "String"
+					},
+					{
+						"name": "voice_control",
+						"type": "String"
+					},
+					{
+						"name": "voxel",
+						"type": "String"
+					},
+					{
+						"name": "walking_simulator",
+						"type": "String"
+					},
+					{
+						"name": "war",
+						"type": "String"
+					},
+					{
+						"name": "wargame",
+						"type": "String"
+					},
+					{
+						"name": "warhammer_40k",
+						"type": "String"
+					},
+					{
+						"name": "web_publishing",
+						"type": "String"
+					},
+					{
+						"name": "werewolves",
+						"type": "String"
+					},
+					{
+						"name": "western",
+						"type": "String"
+					},
+					{
+						"name": "word_game",
+						"type": "String"
+					},
+					{
+						"name": "world_war_i",
+						"type": "String"
+					},
+					{
+						"name": "world_war_ii",
+						"type": "String"
+					},
+					{
+						"name": "wrestling",
+						"type": "String"
+					},
+					{
+						"name": "zombies",
+						"type": "String"
+					},
+					{
+						"name": "e_sports",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/steam_tag_s3')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Steam_s3')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AmazonS3",
+				"typeProperties": {
+					"serviceUrl": "https://s3.amazonaws.com",
+					"accessKeyId": "[parameters('Steam_s3_properties_typeProperties_accessKeyId')]",
+					"secretAccessKey": {
+						"type": "SecureString",
+						"value": "[parameters('Steam_s3_secretAccessKey')]"
+					},
+					"authenticationType": "AccessKey"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/games-data-analysis-WorkspaceDefaultSqlServer')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"parameters": {
+					"DBName": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('games-data-analysis-WorkspaceDefaultSqlServer_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/games-data-analysis-WorkspaceDefaultStorage')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('games-data-analysis-WorkspaceDefaultStorage_properties_typeProperties_url')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/games_s3')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AmazonS3",
+				"typeProperties": {
+					"serviceUrl": "https://s3.amazonaws.com",
+					"accessKeyId": "[parameters('games_s3_properties_typeProperties_accessKeyId')]",
+					"secretAccessKey": {
+						"type": "SecureString",
+						"value": "[parameters('games_s3_secretAccessKey')]"
+					},
+					"authenticationType": "AccessKey"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ign_s3')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AmazonS3",
+				"typeProperties": {
+					"serviceUrl": "https://s3.amazonaws.com",
+					"accessKeyId": "[parameters('ign_s3_properties_typeProperties_accessKeyId')]",
+					"secretAccessKey": {
+						"type": "SecureString",
+						"value": "[parameters('ign_s3_secretAccessKey')]"
+					},
+					"authenticationType": "AccessKey"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/steam_tag_s3')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AmazonS3",
+				"typeProperties": {
+					"serviceUrl": "https://s3.amazonaws.com",
+					"accessKeyId": "[parameters('steam_tag_s3_properties_typeProperties_accessKeyId')]",
+					"secretAccessKey": {
+						"type": "SecureString",
+						"value": "[parameters('steam_tag_s3_secretAccessKey')]"
+					},
+					"authenticationType": "AccessKey"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AutoResolveIntegrationRuntime')]",
+			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "Managed",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "AutoResolve",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 0
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/WorkspaceSystemIdentity')]",
+			"type": "Microsoft.Synapse/workspaces/credentials",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "ManagedIdentity",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Notebook 1')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "SparkSQL",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "112g",
+					"driverCores": 16,
+					"executorMemory": "112g",
+					"executorCores": 16,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "0500c4b3-712f-4844-91c8-00d8ec9824e1"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/372eba77-f763-4dbb-9cc4-b691cd19052f/resourceGroups/games-data-analysis/providers/Microsoft.Synapse/workspaces/games-data-analysis/bigDataPools/SparkSQL",
+						"name": "SparkSQL",
+						"type": "Spark",
+						"endpoint": "https://games-data-analysis.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/SparkSQL",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.3",
+						"nodeCount": 10,
+						"cores": 80,
+						"memory": 472,
+						"automaticScaleJobs": false
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SparkSQL')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": 15
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": 10,
+					"minNodeCount": 3
+				},
+				"nodeCount": 10,
+				"nodeSize": "XXXLarge",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "3.3",
+				"isComputeIsolationEnabled": true,
+				"sessionLevelPackagesEnabled": false,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "eastus"
+		}
+	]
+}

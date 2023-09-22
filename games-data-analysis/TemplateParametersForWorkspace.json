@@ -1,0 +1,39 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"value": "games-data-analysis"
+		},
+		"Steam_s3_secretAccessKey": {
+			"value": ""
+		},
+		"games-data-analysis-WorkspaceDefaultSqlServer_connectionString": {
+			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:games-data-analysis.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"games_s3_secretAccessKey": {
+			"value": ""
+		},
+		"ign_s3_secretAccessKey": {
+			"value": ""
+		},
+		"steam_tag_s3_secretAccessKey": {
+			"value": ""
+		},
+		"Steam_s3_properties_typeProperties_accessKeyId": {
+			"value": "AKIA3H3SVVLYT7RZXB2N"
+		},
+		"games-data-analysis-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"value": "https://gamesdataanalysis.dfs.core.windows.net"
+		},
+		"games_s3_properties_typeProperties_accessKeyId": {
+			"value": "AKIA3H3SVVLYT7RZXB2N"
+		},
+		"ign_s3_properties_typeProperties_accessKeyId": {
+			"value": "AKIA3H3SVVLYT7RZXB2N"
+		},
+		"steam_tag_s3_properties_typeProperties_accessKeyId": {
+			"value": "AKIA3H3SVVLYT7RZXB2N"
+		}
+	}
+}

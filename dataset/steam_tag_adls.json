@@ -1,0 +1,22 @@
+{
+	"name": "steam_tag_adls",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "games-data-analysis-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileSystem": "gamesdataanalysis"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}

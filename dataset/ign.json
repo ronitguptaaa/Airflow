@@ -11,7 +11,7 @@
 			"location": {
 				"type": "AmazonS3Location",
 				"bucketName": "games-data-analysis",
-				"fileName": "ign.csv"
+				"fileName": "6511b3be65a6500002000001.csv"
 			},
 			"columnDelimiter": ",",
 			"escapeChar": "\\",

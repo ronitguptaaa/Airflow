@@ -1,0 +1,22 @@
+{
+	"name": "gamesdataset",
+	"properties": {
+		"Name": "gamesdataset",
+		"EntityType": "DATABASE",
+		"Origin": {
+			"Type": "SPARK"
+		},
+		"Properties": {
+			"IsSyMSCDMDatabase": true
+		},
+		"Source": {
+			"Provider": "ADLS",
+			"Location": "abfss://gamesdataanalysis@gamesdataanalysis.dfs.core.windows.net/synapse",
+			"Properties": {
+				"FormatType": "csv",
+				"LinkedServiceName": "games-data-analysis-WorkspaceDefaultStorage"
+			}
+		}
+	},
+	"type": "DATABASE"
+}
